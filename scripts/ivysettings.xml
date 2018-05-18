@@ -1,0 +1,10 @@
+<ivysettings>
+    <settings defaultResolver="Library" />
+    <resolvers>
+    	<chain name="Library" returnFirst="true" checkmodified="true" >    	
+           	<ibiblio name="Internal" m2compatible="true" root="http://192.192.9.122:8888/repository/InternalRelease/" />
+            <ibiblio name="Snapshots" m2compatible="true" root="http://192.192.9.122:8888/repository/snapshotsRelease/" />
+           	<ibiblio name="public" m2compatible="true"/>     
+        </chain>
+    </resolvers>
+</ivysettings>

@@ -1,0 +1,16 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Cygnet-SYNC Web Test Suite" verbose="1" preserve-order="true"> 
+	<test name="Login" enabled="false">
+		<classes>
+			<class name="com.fastrax.web.test.Login" />
+		</classes>
+	</test>
+	
+	<test name="Accounts" enabled="true">
+		<classes>
+			<class name="com.fastrax.web.test.Accounts" />
+		</classes>
+	</test>
+	
+</suite>

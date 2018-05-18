@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project name="FASTRAX Test Automation" basedir=".." default="runtests" xmlns:ac="antlib:net.sf.antcontrib">
+
+	<!-- Default Settings -->
+
+	<property name="debuglevel" value="source,lines,vars" />
+	<property name="target" value="1.8" />
+	<property name="source" value="1.8" />
+
+	<!-- Default properties to Load -->
+
+	<property file="scripts/WebdriverTestRunner.properties" />
+
+	<!-- Default Browser Location to open a Report -->
+
+	<property name="browser" value="C:\Program Files\Mozilla Firefox\firefox.exe" />
+	<property name="browser1" value="C:\Program Files (x86)\Mozilla Firefox\firefox.exe" />
+
+	<!-- Default Directories -->
+
+	<property name="bin.dir" value="${basedir}/bin" />
+	<property name="lib.dir" value="${basedir}/lib" />
+	<property name="src.dir" value="${basedir}/src" />
+	<property name="test.config.dir" value="${basedir}/${conf.dir}" />
+
+	<!-- Rerun Failed Test Case Settings -->
+
+	<property name="invocation.sufix" value="" />
+	<!--<property name="rerun.failed.test" value="" /> -->
+
+	<tstamp>
+		<format property="run.time" pattern="dd_MMM_yyyy_hh_mm_aa" />
+	</tstamp>
+
+	<target name="clean">
+		<delete dir="bin" /> 
+		<!--
+		<delete>
+			<fileset dir="${lib.dir}" includes="*.jar" excludes="ant-contrib-1.0b3.jar,testng-6.8.jar" />
+			
+		</delete>
+		-->
+	</target>
+
+	<target name="resolve" xmlns:ivy="antlib:org.apache.ivy.ant" xmlns:artifact="antlib:org.apache.maven.artifact.ant" depends="init">
+		<ivy:settings file="scripts/ivysettings.xml">
+		</ivy:settings>
+		<ivy:retrieve>
+		</ivy:retrieve>
+	</target>
+
+	<target name="init" depends="clean">
+		<mkdir dir="${bin.dir}" />
+	</target>
+
+	<path id="default.classpath">
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+			<include name="**/*.jar" />
+		</fileset>
+		<pathelement path="${bin.dir}" />
+	</path>
+
+	<target name="build" depends="init">
+		<echo message="${ant.project.name}: ${ant.file}" />
+		<javac debug="true" destdir="${bin.dir}" source="${source}" target="${target}">
+			<src path="${src.dir}" />
+			<classpath refid="default.classpath" />
+		</javac>
+	</target>
+
+	<target name="gendoc" depends="build">
+		<javadoc packagenames="com.**.test.*" sourcepath="${src.dir}" destdir="docs/tests" verbose="true" author="true" version="true" use="true" windowtitle="Sample Automation Tests" classpathref="default.classpath">
+			<doctitle>${javadoc.title}</doctitle>
+			<bottom>${javadoc.bottom.title}</bottom>
+		</javadoc>
+	</target>
+
+	<target name="rerun">
+		<echo>${output.dir} ${count}</echo>
+		<if>
+			<available file="${output.dir}/testng-failed.xml" />
+			<then>
+				<var name="testng.suite.file" unset="true" />
+				<property name="testng.suite.file" value="${output.dir}${invocation.sufix}/testng-failed.xml" />
+				<var name="invocation.sufix" unset="true" />
+				<property name="invocation.sufix" value="/rerun-${count}" />
+				<antcall target="${caller.target}" />
+			</then>
+		</if>
+	</target>
+
+	<target name="runtests" depends="gendoc">
+
+		<echo>TestNG File : ${testng.suite.file}</echo>
+		<echo>Invocation Suffix : ${invocation.sufix}</echo>
+		<echo>Output Directory : ${output.dir}</echo>
+
+		<taskdef resource="net/sf/antcontrib/antlib.xml">
+			<classpath>
+				<fileset file="${lib.dir}/ant-contrib*.jar">
+				</fileset>
+			</classpath>
+		</taskdef>
+
+		<if>
+			<equals arg1="${invocation.sufix}" arg2="">
+			</equals>
+			<then>
+				<var name="output.dir" value="${test.results.dir}/${run.time}${invocation.sufix}" />
+			</then>
+		</if>
+
+		<if>
+			<not>
+				<equals arg1="${invocation.sufix}" arg2="">
+				</equals>
+			</not>
+			<then>
+				<var name="output.dir" value="${output.dir}${invocation.sufix}" />
+				<echo>Pratik</echo>
+			</then>
+		</if>
+
+		<echo>${output.dir}</echo>
+
+		<taskdef resource="testngtasks" classpathref="default.classpath" />
+
+		<!-- <testng classpathref="default.classpath" outputDir="${output.dir}" useDefaultListeners="true" listeners="org.uncommons.reportng.HTMLReporter,com.litera.web.listener.CustomListener"> -->
+		<!-- <testng classpathref="default.classpath" outputDir="${output.dir}" useDefaultListeners="true" listeners="org.uncommons.reportng.HTMLReporter,com.litera.web.listener.CustomListener"> -->
+			<testng classpathref="default.classpath" outputDir="${output.dir}" useDefaultListeners="true" listeners="org.uncommons.reportng.HTMLReporter,com.fastrax.web.listener.MyListener,com.fastrax.web.listener.CustomListener">
+
+			<xmlfileset dir="${test.config.dir}" includes="${testng.suite.file}" />
+			<xmlfileset file="${testng.suite.file}" erroronmissingdir="false" />
+			<jvmarg value="-ea" />
+			<sysproperty key="org.uncommons.reportng.title" value="${testng.report.title}" />
+			<sysproperty key="org.uncommons.reportng.escape-output" value="false" />
+			<sysproperty key="outputDir" value="${test.results.dir}" />
+			<sysproperty key="report.dir" value="${output.dir}" />
+			<sysproperty key="test.results.dir" value="${output.dir}/html" />
+			<sysproperty key="test.results.screenshots.dir" value="${output.dir}/img" />
+			<sysproperty key="log4j.configuration" value="file:///${lib.dir}/log4j.properties" />
+			<sysproperty key="run_time" value="${run.time}" />
+			<sysproperty key="ReportLink" value="" />
+
+			<!-- <sysproperty key="webdriver.server.ip" value="192.192.8.39" /> -->
+			<propertyset>
+				<propertyref builtin="commandline" />
+			</propertyset>
+		</testng>
+
+		<available file="${output.dir}/html/index.html" property="result.present" />
+
+		<if>
+			<equals arg1="${result.present}" arg2="true" />
+			<then>
+				<antcall target="openReport" />
+			</then>
+		</if>
+
+		<if>
+			<not>
+				<equals arg1="${caller.target}" arg2="runtests">
+				</equals>
+			</not>
+			<then>
+				<var name="caller.target" value="runtests" />
+				<foreach list="${rerun.failed.test}" target="rerun" param="count" />
+			</then>
+		</if>
+	</target>
+
+	<target name="runtestsjenkins" depends="gendoc">
+
+		<echo>TestNG File : ${testng.suite.file}</echo>
+		<echo>Invocation Suffix : ${invocation.sufix}</echo>
+		<echo>Output Directory : ${output.dir}</echo>
+
+		<taskdef resource="net/sf/antcontrib/antlib.xml">
+			<classpath>
+				<fileset file="${lib.dir}/ant-contrib*.jar">
+				</fileset>
+			</classpath>
+		</taskdef>
+
+		<if>
+			<equals arg1="${invocation.sufix}" arg2="">
+			</equals>
+			<then>
+				<var name="output.dir" value="${test.results.dir}/${build_id}" />
+			</then>
+		</if>
+
+		<if>
+			<not>
+				<equals arg1="${invocation.sufix}" arg2="">
+				</equals>
+			</not>
+			<then>
+				<var name="output.dir" value="${output.dir}${invocation.sufix}" />
+				<echo>Avanish</echo>
+			</then>
+		</if>
+
+		<echo>${output.dir}</echo>
+
+		<taskdef resource="testngtasks" classpathref="default.classpath" />
+
+		<!-- <testng classpathref="default.classpath" outputDir="${output.dir}" useDefaultListeners="true" listeners="org.uncommons.reportng.HTMLReporter,com.cipl.listener.CustomListener"> -->
+			<testng classpathref="default.classpath" outputDir="${output.dir}" useDefaultListeners="true" listeners="org.uncommons.reportng.HTMLReporter,bin.com.fastrax.web.listener.MyListener">
+
+			<xmlfileset dir="${test.config.dir}" includes="${testng.suite.file}" />
+			<xmlfileset file="${testng.suite.file}" erroronmissingdir="false" />
+			<jvmarg value="-ea" />
+			<sysproperty key="run_time" value="${run.time}" />
+			<sysproperty key="org.uncommons.reportng.title" value="${testng.report.title}" />
+			<sysproperty key="org.uncommons.reportng.escape-output" value="false" />
+			<sysproperty key="outputDir" value="${test.results.dir}" />
+			<sysproperty key="report.dir" value="${output.dir}" />
+			<sysproperty key="test.results.dir" value="${output.dir}/html" />
+			<sysproperty key="build_id" value="${build.id}" />
+			<!-- <sysproperty key="test.results.screenshots.dir" value="${imagePath}/${test.results.dir}/${run.time}/img" /> -->
+			<sysproperty key="test.results.screenshots.dir" value="${output.dir}/img" /> 
+			<sysproperty key="log4j.configuration" value="file:///${lib.dir}/log4j.properties" />
+			<propertyset>
+				<propertyref builtin="commandline" />
+			</propertyset>
+		</testng>
+
+				<available file="${output.dir}/html/index.html" property="result.present" />
+
+				<if>
+					<equals arg1="${result.present}" arg2="true" />
+
+					<then>
+						<antcall target="cleanup" />
+					</then>
+				</if>
+
+				<if>
+					<not>
+						<equals arg1="${caller.target}" arg2="runtests">
+						</equals>
+					</not>
+					<then>
+						<var name="caller.target" value="runtests" />
+						<foreach list="${rerun.failed.test}" target="rerun" param="count" />
+					</then>
+				</if>
+	</target>
+
+	<target name="runtestsjenkinstestlink" depends="gendoc">
+
+		<echo>TestNG File : ${testng.suite.file}</echo>
+		<echo>Invocation Suffix : ${invocation.sufix}</echo>
+		<echo>Output Directory : ${output.dir}</echo>
+
+		<taskdef resource="net/sf/antcontrib/antlib.xml">
+			<classpath>
+				<fileset file="${lib.dir}/ant-contrib*.jar">
+				</fileset>
+			</classpath>
+		</taskdef>
+
+		<if>
+			<equals arg1="${invocation.sufix}" arg2="">
+			</equals>
+			<then>
+				<var name="output.dir" value="${test.results.dir}/${run.time}${invocation.sufix}" />
+			</then>
+		</if>
+
+		<if>
+			<not>
+				<equals arg1="${invocation.sufix}" arg2="">
+				</equals>
+			</not>
+			<then>
+				<var name="output.dir" value="${output.dir}${invocation.sufix}" />
+			</then>
+		</if>
+
+		<echo>${output.dir}</echo>
+
+		<taskdef resource="testngtasks" classpathref="default.classpath" />
+
+		<testng classpathref="default.classpath" outputDir="${output.dir}" useDefaultListeners="true" listeners="org.uncommons.reportng.HTMLReporter">
+
+			<xmlfileset dir="${test.config.dir}" includes="${testng.suite.file}" />
+			<xmlfileset file="${testng.suite.file}" erroronmissingdir="false" />
+			<jvmarg value="-ea" />
+			<sysproperty key="run_time" value="${run.time}" />
+			<sysproperty key="org.uncommons.reportng.title" value="${testng.report.title}" />
+			<sysproperty key="org.uncommons.reportng.escape-output" value="false" />
+			<sysproperty key="outputDir" value="${test.results.dir}" />
+			<sysproperty key="report.dir" value="${output.dir}" />
+			<sysproperty key="test.results.dir" value="${output.dir}/html" />
+			<sysproperty key="test.results.screenshots.dir" value="${output.dir}/img" />
+			<sysproperty key="log4j.configuration" value="file:///${lib.dir}/log4j.properties" />
+			<sysproperty key="testlink.integration" value="${UpdateResultInTestLink}" />
+			<sysproperty key="testlink.buildName" value="${TestLinkBuild}" />
+			<sysproperty key="browser" value="${Browser}" />
+			<sysproperty key="testlink.platform" value="${Browser}" />
+
+			<propertyset>
+				<propertyref builtin="commandline" />
+			</propertyset>
+		</testng>
+
+	</target>
+
+
+	<target name="openReport">
+		<available file="${browser}" property="browser.present" />
+		<if>
+			<equals arg1="${browser.present}" arg2="true" />
+			<then>
+				<exec executable="${browser}" spawn="yes">
+					<arg line="'${output.dir}\html\index.html'" />
+				</exec>
+			</then>
+		</if>
+
+		<available file="${browser1}" property="browser.present" />
+		<if>
+			<equals arg1="${browser.present}" arg2="true" />
+			<then>
+				<exec executable="${browser1}" spawn="yes">
+					<arg line="'${output.dir}\html\index.html'" />
+				</exec>
+			</then>
+		</if>
+
+		<antcall target="cleanup">
+		</antcall>
+	</target>
+
+	<target name="cleanup">
+		<exec dir="." executable="cmd.exe">
+			<arg value="/c" />
+			<arg value="cleanup.bat" />
+			<arg value="${test.results.dir}" />
+			<arg value="${keep_last_test_results}" />
+		</exec>
+	</target>
+</project>

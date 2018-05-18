@@ -1,0 +1,3 @@
+<project name="Cygnet Automation" basedir="." >
+		<import file="scripts\WebdriverTestRunner.xml"/>
+</project>
